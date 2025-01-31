@@ -7,6 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <link rel="stylesheet" href="homepage_style.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
 </head>
 <body class="bg-light">
 
@@ -20,7 +21,7 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <button class="btn btn-success me-2 btn-sm mt-1" onclick="openAddClientForm()">Add Client</button>
+                        <button class="btn btn-success me-2 btn-sm mt-1" data-bs-toggle="modal" data-bs-target="#addClientModal">Add Client</button>
                     </li>
                     <li class="nav-item">
                         <button class="btn btn-danger btn-sm mt-1" onclick="logout()">Logout</button>
@@ -30,62 +31,67 @@
         </div>
     </nav>
 
+    <!-- Add Client Modal -->
+    <div class="modal fade" id="addClientModal" tabindex="-1" aria-labelledby="addClientModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addClientModalLabel">Add New Client</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="Add_Clients.php" method="POST" onsubmit="return validateForm()" enctype="multipart/form-data">
+                        <input type="hidden" name="action" value="add">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="clientName" class="form-label">Name</label>
+                                    <input type="text" class="form-control" id="clientName" name="name">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="clientEmail" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="clientEmail" name="email">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="clientNumber" class="form-label">Number</label>
+                                    <input type="tel" class="form-control" id="clientNumber" name="number">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="clientImage" class="form-label">Profile Image</label>
+                                    <input type="file" class="form-control" id="clientImage" name="image" accept="image/*">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Add</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <!-- Add Client Form -->
+    <!-- Data Table Container -->
     <div class="container mt-5 pt-5">
         <div class="row">
             <div class="col-12">
-                <div id="addClientForm" class="container mt-5 pt-5" style="display:none;">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title">Add New Client</h5>
-                        </div>
-                        <div class="card-body">
-                            <form action="Add_Clients.php" method="POST" onsubmit="return validateForm()" enctype="multipart/form-data">
-                                <input type="hidden" name="action" value="add">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="clientName" class="form-label">Name</label>
-                                            <input type="text" class="form-control" id="clientName" name="name">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="clientEmail" class="form-label">Email</label>
-                                            <input type="email" class="form-control" id="clientEmail" name="email">
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-3">
-                                            <label for="clientNumber" class="form-label">Number</label>
-                                            <input type="tel" class="form-control" id="clientNumber" name="number">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="clientImage" class="form-label">Profile Image</label>
-                                        <input type="file" class="form-control" id="clientImage" name="image" accept="image/*">
-                                    </div>
-                                    </div>
-                                </div>
-                                <button type="submit" class="btn btn-primary">Add</button>
-                                <button type="button" class="btn btn-secondary" onclick="closeAddClientForm()">Close</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-                
                 <!-- Data Table -->
-                <div class="card mt-4">
+                <div  class="card mt-4">
                     <div class="card-header">
                         <h5 class="card-title">Client Information</h5>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-striped">
+                            <table id="myTable" class="table table-striped">
                                 <thead>
                                     <tr>
                                         <th>Profile</th>
@@ -104,7 +110,7 @@
                                         echo "<tr>
                                             <td>
                                                 <img src='" . ($row['image_path'] ? $row['image_path'] : 'path/to/default-image.png') . "' 
-                                                alt='Profile Picture' 
+                                                alt='profile' 
                                                 class='rounded-circle'
                                                 style='max-width: 40px; max-height: 40px; width: 100%; height: auto; object-fit: cover;'>
                                             </td>
@@ -132,35 +138,20 @@
         </div>
     </div>
 
-    <!-- SweetAlert2 JS -->
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
     <script>
-        function openAddClientForm() {
-            document.getElementById('addClientForm').style.display = 'block';
-        }
+        $(document).ready( function () {
+            $('#myTable').DataTable();
+        });
+        </script>
+    <script>
 
-        function closeAddClientForm() {
-            document.getElementById('addClientForm').style.display = 'none';
-        }
-
-        function confirmDelete(event) {
-            event.preventDefault();
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "You won't be able to revert this!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Yes, delete it!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    event.target.submit();
-                }
-            });
-        }
-
+        
         function validateForm() {
             const name = document.getElementById('clientName').value;
             const email = document.getElementById('clientEmail').value;
@@ -206,9 +197,30 @@
                 }
             }
 
+            // Close modal after successful validation
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addClientModal'));
+            modal.hide();
             return true;
         }
 
+        function confirmDelete(event) {
+            event.preventDefault();
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    event.target.submit();
+                }
+            });
+        }
+
+        // Handle status messages
         const urlParams = new URLSearchParams(window.location.search);
         const status = urlParams.get('status');
         const message = urlParams.get('message');
@@ -224,24 +236,23 @@
             });
         }
 
-
         function logout() {
-        Swal.fire({
-            title: 'Are you sure?',
-            text: "You will be logged out.",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, Logout',
-            cancelButtonText: 'Cancel',
-            reverseButtons: true
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = "http://localhost/Task1-Neuralcore/index.php";
-            } else {
-                console.log("Logout canceled");
-            }
-        });
-    }
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You will be logged out.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Logout',
+                cancelButtonText: 'Cancel',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = "http://localhost/Task1-Neuralcore/index.php";
+                } else {
+                    console.log("Logout canceled");
+                }
+            });
+        }
     </script>
 </body>
 </html>
