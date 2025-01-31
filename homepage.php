@@ -1,3 +1,23 @@
+<?php
+$servername = "localhost"; 
+$username = "root";
+$password = ""; 
+$dbname = "forms"; 
+
+$conn = mysqli_connect($servername, $username, $password, $dbname);
+
+if (!$conn) {
+    die("Connection failed: " . mysqli_connect_error());
+}
+
+
+require 'vendor/autoload.php';
+require_once 'db_connection.php';
+
+$query = "SELECT * FROM users_info WHERE is_hidden = 0 ORDER BY id DESC";
+$result = mysqli_query($conn, $query);
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,10 +26,10 @@
     <title>Minimal Home</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="homepage_style.css">
+    <link rel="stylesheet" href="styles/homepage_style.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" />
 </head>
-<body class="bg-light">
+<body class="bg-light pb-3">
 
     <!-- NAVBAR -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top px-3">
@@ -40,7 +60,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form action="Add_Clients.php" method="POST" onsubmit="return validateForm()" enctype="multipart/form-data">
+                    <form action="Clients.php" method="POST" onsubmit="return validateForm()" enctype="multipart/form-data">
                         <input type="hidden" name="action" value="add">
                         <div class="row">
                             <div class="col-md-6">
@@ -85,7 +105,7 @@
         <div class="row">
             <div class="col-12">
                 <!-- Data Table -->
-                <div  class="card mt-4">
+                <div class="card mt-4">
                     <div class="card-header">
                         <h5 class="card-title">Client Information</h5>
                     </div>
@@ -102,37 +122,54 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php
-                                    require_once 'db_connection.php';
-                                    $query = "SELECT * FROM users_info ORDER BY id DESC";
-                                    $result = mysqli_query($conn, $query);
-                                    while ($row = mysqli_fetch_assoc($result)) {
-                                        echo "<tr>
+                                    <?php while ($row = $result->fetch_assoc()) { ?>
+                                        <tr>
                                             <td>
-                                                <img src='" . ($row['image_path'] ? $row['image_path'] : 'path/to/default-image.png') . "' 
-                                                alt='profile' 
-                                                class='rounded-circle'
-                                                style='max-width: 40px; max-height: 40px; width: 100%; height: auto; object-fit: cover;'>
+                                                <img src="<?php echo $row['image_path'] ? $row['image_path'] : 'path/to/default-image.png'; ?>" 
+                                                    alt="profile" 
+                                                    class="rounded-circle"
+                                                    style="max-width: 40px; max-height: 40px; width: 100%; height: auto; object-fit: cover;">
                                             </td>
-                                            <td>{$row['name']}</td>
-                                            <td>{$row['email']}</td>
-                                            <td>{$row['number']}</td>
+                                            <td><?php echo htmlspecialchars($row['name']); ?></td>
+                                            <td><?php echo htmlspecialchars($row['email']); ?></td>
+                                            <td><?php echo htmlspecialchars($row['number']); ?></td>
                                             <td>
-                                                <a href='Add_Clients.php?id={$row['id']}' class='btn btn-primary btn-sm'>Edit</a>
-                                                <form action='Add_Clients.php' method='POST' style='display:inline;' onsubmit='confirmDelete(event)'>
-                                                    <input type='hidden' name='action' value='delete'>
-                                                    <input type='hidden' name='id' value='{$row['id']}'>
-                                                    <button type='submit' class='btn btn-danger btn-sm'>Delete</button>
+                                                <a href="Clients.php?id=<?php echo $row['id']; ?>" class="btn btn-primary btn-sm">Edit</a>
+                                                <form action="Clients.php" method="POST" style="display:inline;" onsubmit="confirmDelete(event)">
+                                                    <input type="hidden" name="action" value="delete">
+                                                    <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
+                                                    <button type="submit" class="btn btn-danger btn-sm" onclick="showOtpModal(<?php echo $row['id']; ?>)">Delete</button>
                                                 </form>
                                             </td>
-                                        </tr>";
-                                    }
-                                    mysqli_close($conn);
-                                    ?>
+                                        </tr>
+                                    <?php } ?>
                                 </tbody>
                             </table>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <?php mysqli_close($conn); ?>
+        <!-- OTP Verification Modal -->
+    <div class="modal fade" id="verifyOtpModal" tabindex="-1" aria-labelledby="verifyOtpModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="verifyOtpModalLabel">Verify OTP</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="otpForm">
+                        <div class="mb-3">
+                            <label for="otp" class="form-label">Enter OTP</label>
+                            <input type="text" class="form-control" id="otp" name="otp" required>
+                        </div>
+                        <input type="hidden" id="user_id" name="user_id">
+                        <button type="submit" class="btn btn-primary">Verify</button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -144,115 +181,6 @@
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
-    <script>
-        $(document).ready( function () {
-            $('#myTable').DataTable();
-        });
-        </script>
-    <script>
-
-        
-        function validateForm() {
-            const name = document.getElementById('clientName').value;
-            const email = document.getElementById('clientEmail').value;
-            const number = document.getElementById('clientNumber').value;
-            const image = document.getElementById('clientImage').files[0];
-
-            if (!name || !email || !number || !image) {
-                let errorMessage = 'Please fill in all fields!';
-                if (!image) {
-                    errorMessage = 'Please select a profile image!';
-                }
-                
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Validation Error',
-                    text: errorMessage
-                });
-                return false;
-            }
-
-            // Validate image size and type
-            if (image) {
-                const fileSize = image.size / (1024 * 1024); // Convert to MB
-                const fileType = image.type.split('/')[1].toLowerCase();
-                const allowedTypes = ['jpg', 'jpeg', 'png', 'gif'];
-
-                if (fileSize > 5) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'File Too Large',
-                        text: 'Image size should not exceed 5MB'
-                    });
-                    return false;
-                }
-
-                if (!allowedTypes.includes(fileType)) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Invalid File Type',
-                        text: 'Please upload a valid image file (JPG, JPEG, PNG, or GIF)'
-                    });
-                    return false;
-                }
-            }
-
-            // Close modal after successful validation
-            const modal = bootstrap.Modal.getInstance(document.getElementById('addClientModal'));
-            modal.hide();
-            return true;
-        }
-
-        function confirmDelete(event) {
-            event.preventDefault();
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "You won't be able to revert this!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Yes, delete it!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    event.target.submit();
-                }
-            });
-        }
-
-        // Handle status messages
-        const urlParams = new URLSearchParams(window.location.search);
-        const status = urlParams.get('status');
-        const message = urlParams.get('message');
-
-        if (status && message) {
-            Swal.fire({
-                icon: status,
-                title: status.charAt(0).toUpperCase() + status.slice(1),
-                text: message
-            }).then(() => {
-                const newUrl = window.location.href.split('?')[0];
-                history.replaceState(null, '', newUrl);
-            });
-        }
-
-        function logout() {
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "You will be logged out.",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Yes, Logout',
-                cancelButtonText: 'Cancel',
-                reverseButtons: true
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = "http://localhost/Task1-Neuralcore/index.php";
-                } else {
-                    console.log("Logout canceled");
-                }
-            });
-        }
-    </script>
+    <script src="homepage_script.js"></script>
 </body>
 </html>
