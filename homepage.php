@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="homepage_style.css">
 </head>
 <body class="bg-light">
+
     <!-- NAVBAR -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top px-3">
         <div class="container-fluid">
@@ -103,9 +104,9 @@
                                         echo "<tr>
                                             <td>
                                                 <img src='" . ($row['image_path'] ? $row['image_path'] : 'path/to/default-image.png') . "' 
-                                                    alt='' 
-                                                    class='rounded-circle'
-                                                    style='max-width: 40px; max-height: 40px; width: 100%; height: auto; object-fit: cover;'>
+                                                alt='Profile Picture' 
+                                                class='rounded-circle'
+                                                style='max-width: 40px; max-height: 40px; width: 100%; height: auto; object-fit: cover;'>
                                             </td>
                                             <td>{$row['name']}</td>
                                             <td>{$row['email']}</td>
@@ -225,7 +226,6 @@
 
 
         function logout() {
-        // Show SweetAlert confirmation
         Swal.fire({
             title: 'Are you sure?',
             text: "You will be logged out.",
@@ -236,10 +236,8 @@
             reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {
-                // Redirect to the specified URL if confirmed
                 window.location.href = "http://localhost/Task1-Neuralcore/index.php";
             } else {
-                // Optionally, you can add any action when the user clicks "Cancel"
                 console.log("Logout canceled");
             }
         });
