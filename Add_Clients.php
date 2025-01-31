@@ -1,5 +1,6 @@
 <?php
 session_start();
+require 'vendor/autoload.php';
 require_once 'db_connection.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -192,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
                     <h5 class="card-title">Edit Client</h5>
                 </div>
                 <div class="card-body">
-                <form action="Add_Clients.php" method="POST" onsubmit="return confirmEdit()" enctype="multipart/form-data">
+                <form action="Clients.php" method="POST" onsubmit="return confirmEdit()" enctype="multipart/form-data">
                     <input type="hidden" name="action" value="edit">
                     <input type="hidden" name="id" value="<?php echo $client['id']; ?>">
                     <div class="mb-3">
@@ -242,8 +243,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
             }
 
             // Function to validate and confirm edit form submission
-            function confirmEdit() {
-            return Swal.fire({
+            async function confirmEdit() {
+            const result = await Swal.fire({
                 title: 'Are you sure?',
                 text: "Do you want to save the changes to this client?",
                 icon: 'warning',
@@ -252,14 +253,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
                 cancelButtonColor: '#d33',
                 confirmButtonText: 'Yes, save changes!',
                 cancelButtonText: 'Cancel'
-            }).then((result) => {
-                return result.isConfirmed; // Return true if confirmed, false if canceled
             });
+            return result.isConfirmed; // Ensures form submission only when confirmed
         }
 
 
 
-    <form action="Add_Clients.php" method="POST" onsubmit="return confirmEdit()">
+    <form action="Clients.php" method="POST" onsubmit="return confirmEdit()">
             </script>
         </body>
         </html>
@@ -268,4 +268,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
 }
 
 mysqli_close($conn);
-
