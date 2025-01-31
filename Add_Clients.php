@@ -69,10 +69,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Edit Client
         elseif ($action === 'edit') {
-          $id = mysqli_real_escape_string($conn, $_POST['id']);
-          $name = mysqli_real_escape_string($conn, $_POST['name']);
-          $email = mysqli_real_escape_string($conn, $_POST['email']);
-          $number = mysqli_real_escape_string($conn, $_POST['number']);
+            $id = mysqli_real_escape_string($conn, $_POST['id']);
+            $name = mysqli_real_escape_string($conn, $_POST['name']);
+            $email = mysqli_real_escape_string($conn, $_POST['email']);
+            $number = mysqli_real_escape_string($conn, $_POST['number']);
       
           // Validate email
           if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -91,56 +91,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       
           // Handle image upload
           if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-              $image = $_FILES['image'];
-              $imageName = basename($image['name']);
-              $imageTmpName = $image['tmp_name'];
-              $imageSize = $image['size'];
-              $imageType = strtolower(pathinfo($imageName, PATHINFO_EXTENSION));
+            $image = $_FILES['image'];
+            $imageName = basename($image['name']);
+            $imageTmpName = $image['tmp_name'];
+            $imageSize = $image['size'];
+            $imageType = strtolower(pathinfo($imageName, PATHINFO_EXTENSION));
       
-              // Validate image type and size
-              $allowedTypes = ['jpg', 'jpeg', 'png', 'gif'];
-              if (!in_array($imageType, $allowedTypes)) {
-                  header("Location: homepage.php?status=error&message=Invalid image type. Allowed types: JPG, JPEG, PNG, GIF");
-                  exit;
-              }
-              if ($imageSize > 5 * 1024 * 1024) { // 5MB limit
-                  header("Location: homepage.php?status=error&message=Image size exceeds 5MB");
-                  exit;
-              }
+               // Validate image type and size
+            $allowedTypes = ['jpg', 'jpeg', 'png', 'gif'];
+            if (!in_array($imageType, $allowedTypes)) {
+                header("Location: homepage.php?status=error&message=Invalid image type. Allowed types: JPG, JPEG, PNG, GIF");
+                exit;
+            }
+            if ($imageSize > 5 * 1024 * 1024) { // 5MB limit
+                header("Location: homepage.php?status=error&message=Image size exceeds 5MB");
+                exit;
+            }
       
-              // Move uploaded image to a folder
-              $uploadDir = 'uploads/';
-              if (!is_dir($uploadDir)) {
-                  mkdir($uploadDir, 0755, true);
-              }
-              $imagePath = $uploadDir . uniqid() . '.' . $imageType;
-              move_uploaded_file($imageTmpName, $imagePath);
+              /// Move uploaded image to a folder
+            $uploadDir = 'uploads/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+            $imagePath = $uploadDir . uniqid() . '.' . $imageType;
+            move_uploaded_file($imageTmpName, $imagePath);
       
-              // Delete old image if it exists
-              $oldImageQuery = "SELECT image_path FROM users_info WHERE id = $id";
-              $oldImageResult = mysqli_query($conn, $oldImageQuery);
-              if ($oldImageRow = mysqli_fetch_assoc($oldImageResult)) {
-                  if ($oldImageRow['image_path'] && file_exists($oldImageRow['image_path'])) {
-                      unlink($oldImageRow['image_path']);
-                  }
-              }
-          } else {
-              // Keep the existing image if no new image is uploaded
-              $imageQuery = "SELECT image_path FROM users_info WHERE id = $id";
-              $imageResult = mysqli_query($conn, $imageQuery);
-              $imageRow = mysqli_fetch_assoc($imageResult);
-              $imagePath = $imageRow['image_path'];
-          }
+               // Delete old image if it exists
+            $oldImageQuery = "SELECT image_path FROM users_info WHERE id = $id";
+            $oldImageResult = mysqli_query($conn, $oldImageQuery);
+            if ($oldImageRow = mysqli_fetch_assoc($oldImageResult)) {
+                if ($oldImageRow['image_path'] && file_exists($oldImageRow['image_path'])) {
+                    unlink($oldImageRow['image_path']);
+                }
+            }
+            } else {
+            // Keep the existing image if no new image is uploaded
+            $imageQuery = "SELECT image_path FROM users_info WHERE id = $id";
+            $imageResult = mysqli_query($conn, $imageQuery);
+            $imageRow = mysqli_fetch_assoc($imageResult);
+            $imagePath = $imageRow['image_path'];
+            }
+
       
           // Update database
-          $query = "UPDATE users_info SET name='$name', email='$email', number='$number', image_path='$imagePath' WHERE id=$id";
-      
-          if (mysqli_query($conn, $query)) {
-              header("Location: homepage.php?status=success&message=Client updated successfully");
-          } else {
-              header("Location: homepage.php?status=error&message=" . urlencode(mysqli_error($conn)));
-          }
-      }
+            $query = "UPDATE users_info SET name='$name', email='$email', number='$number', image_path='$imagePath' WHERE id=$id";
+
+            if (mysqli_query($conn, $query)) {
+                header("Location: homepage.php?status=success&message=Client updated successfully");
+            } else {
+                header("Location: homepage.php?status=error&message=" . urlencode(mysqli_error($conn)));
+            }
+        }
 
         // Delete Client
         elseif ($action === 'delete') {
@@ -191,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
                     <h5 class="card-title">Edit Client</h5>
                 </div>
                 <div class="card-body">
-                <form action="Add_Clients.php" method="POST" onsubmit="return confirmEdit()">
+                <form action="Add_Clients.php" method="POST" onsubmit="return confirmEdit()" enctype="multipart/form-data">
                     <input type="hidden" name="action" value="edit">
                     <input type="hidden" name="id" value="<?php echo $client['id']; ?>">
                     <div class="mb-3">
@@ -205,6 +206,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
                     <div class="mb-3">
                         <label for="number" class="form-label">Number</label>
                         <input type="tel" class="form-control" id="number" name="number" value="<?php echo $client['number']; ?>" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="image" class="form-label">Profile Image</label>
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                        <?php if ($client['image_path']): ?>
+                            <img src="<?php echo $client['image_path']; ?>" alt="Current Image" style="max-width: 100px; margin-top: 10px;">
+                        <?php endif; ?>
                     </div>
                     <button type="submit" class="btn btn-primary">Save Changes</button>
                 </form>
@@ -250,14 +258,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['id'])) {
         }
 
 
-// Add this in the form's onsubmit event
-<form action="Add_Clients.php" method="POST" onsubmit="return confirmEdit()">
-        </script>
-    </body>
-    </html>
-    <?php
-    exit;
+
+    <form action="Add_Clients.php" method="POST" onsubmit="return confirmEdit()">
+            </script>
+        </body>
+        </html>
+        <?php
+        exit;
 }
 
 mysqli_close($conn);
-?>
+
